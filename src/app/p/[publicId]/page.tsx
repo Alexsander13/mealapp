@@ -39,7 +39,7 @@ export default function PublicPage({ params }: any){
       .then((j: any) => {
         if (j.ok && j.data) {
           const recipeMap = new Map()
-          j.data.forEach((r: any) => recipeMap.set(r.id, r))
+          j.data.forEach((r: any) => recipeMap.set(String(r.id), r))
           setRecipes(recipeMap)
         }
       })
@@ -51,7 +51,24 @@ export default function PublicPage({ params }: any){
     setCurrentPlan(plan)
     const j = await loadPlan(plan.id)
     if (j.ok && j.rows) {
+      console.log('📋 Plan rows loaded:', j.rows.length)
       setPlanRows(j.rows)
+      
+      // Загружаем только нужные рецепты по ID
+      const recipeIds = [...new Set(j.rows.map((r: any) => r.recipe_id))]
+      console.log('📥 Loading recipes:', recipeIds.length)
+      
+      const response = await fetch('/api/recipes?ids=' + recipeIds.join(','))
+      const recipesData = await response.json()
+      
+      if (recipesData.ok && recipesData.data) {
+        const recipeMap = new Map(recipes)
+        recipesData.data.forEach((r: any) => {
+          recipeMap.set(String(r.id), r)
+        })
+        setRecipes(recipeMap)
+        console.log('✅ Recipes loaded and added to map')
+      }
     }
     setLoading(false)
   }
@@ -269,7 +286,8 @@ export default function PublicPage({ params }: any){
                       <div className="space-y-4">
                         {SLOTS.map(slot => {
                           const row = planRows.find(r => r.day_index === day && r.slot === slot)
-                          const recipe = row ? recipes.get(row.recipe_id) : null
+                          // Конвертируем recipe_id в строку для поиска в Map
+                          const recipe = row ? recipes.get(String(row.recipe_id)) : null
                           return (
                             <div key={slot} className="group">
                               <div className="flex items-center gap-2 mb-2">

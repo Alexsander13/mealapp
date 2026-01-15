@@ -7,7 +7,8 @@ export async function createPlan(profileId: string, peopleCount: number, name?: 
 }
 
 export async function addPlanRow(planId: string, dayIndex: number, slot: string, recipeId: string) {
-  const { data, error } = await supabaseAdmin.from('plan_rows').insert({ plan_id: planId, day_index: dayIndex, slot, recipe_id: recipeId }).select().single()
+  // Конвертируем recipeId в число для BIGINT поля
+  const { data, error } = await supabaseAdmin.from('plan_rows').insert({ plan_id: planId, day_index: dayIndex, slot, recipe_id: Number(recipeId) }).select().single()
   if (error) throw error
   return data
 }
@@ -25,7 +26,8 @@ export async function getPlan(planId: string){
 }
 
 export async function replacePlanRow(planId: string, dayIndex: number, slot: string, recipeId: string){
-  const { data, error } = await supabaseAdmin.from('plan_rows').upsert({ plan_id: planId, day_index: dayIndex, slot, recipe_id: recipeId }, { onConflict: ['plan_id','day_index','slot'] }).select()
+  // Конвертируем recipeId в число для BIGINT поля
+  const { data, error } = await supabaseAdmin.from('plan_rows').upsert({ plan_id: planId, day_index: dayIndex, slot, recipe_id: Number(recipeId) }, { onConflict: ['plan_id','day_index','slot'] }).select()
   if (error) throw error
   return data
 }
